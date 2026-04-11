@@ -52,8 +52,10 @@ All baselines produced coefficients below 0.01 on our data. The failures are str
 
 NGC is originally designed for regularly sampled multivariate time series (n×D format), which is structurally incompatible with our asynchronous n×3 event stream. To enable comparison, we adapted NGC to our setting by discretizing the event stream into fixed-width bins. Even with this adaptation, NGC achieved substantially lower performance than our method, confirming that the n×D assumption fundamentally limits performance on event sequence data.
 
-NGC Results on Synthetic Data (20 seeds)
-SizePrecisionRecallF1SHDFPR100.3306 ± 0.10110.2479 ± 0.07580.2833 ± 0.086730.1 ± 3.640.334 ± 0.040200.3151 ± 0.04080.2419 ± 0.03130.2737 ± 0.0355127.1 ± 6.210.334 ± 0.016300.2532 ± 0.02810.2030 ± 0.02260.2253 ± 0.0250302.9 ± 9.790.348 ± 0.011
+| Size | Precision | Recall | F1 | SHD | FPR |
+| 10 | 0.3306 ± 0.1011 | 0.2479 ± 0.0758 | 0.2833 ± 0.0867 | 30.1 ± 3.64 | 0.334 ± 0.040 |
+| 20 | 0.3151 ± 0.0408 | 0.2419 ± 0.0313 | 0.2737 ± 0.0355 | 127.1 ± 6.21 | 0.334 ± 0.016 |
+| 30 | 0.2532 ± 0.0281 | 0.2030 ± 0.0226 | 0.2253 ± 0.0250 | 302.9 ± 9.79 | 0.348 ± 0.011 |
 
 ## 4. Data Format Comparison: n×3 vs. n×D
 
