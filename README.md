@@ -50,12 +50,10 @@ All baselines produced coefficients below 0.01 on our data. The failures are str
 
 ## 3. Neural Granger Causality (NGC) [Tank et al., 2021]
 
-NGC is originally designed for regularly sampled multivariate time series (n×D format), which is structurally incompatible with our asynchronous n×3 event stream. To enable comparison, we adapted NGC to our setting by discretizing the event stream into fixed-width bins. Even with this adaptation, NGC achieved an F1 score of approximately 0.28 — substantially below our method — confirming that the n×D assumption fundamentally limits performance on event sequence data.
+NGC is originally designed for regularly sampled multivariate time series (n×D format), which is structurally incompatible with our asynchronous n×3 event stream. To enable comparison, we adapted NGC to our setting by discretizing the event stream into fixed-width bins. Even with this adaptation, NGC achieved substantially lower performance than our method, confirming that the n×D assumption fundamentally limits performance on event sequence data.
 
-| Method | F1 | Note |
-|---|---|---|
-| **Ours** | **Best across all sizes** | Native n×3 event stream support |
-| NGC (adapted) | ~0.28 | Requires discretization; not designed for this data format |
+NGC Results on Synthetic Data (20 seeds)
+SizePrecisionRecallF1SHDFPR100.3306 ± 0.10110.2479 ± 0.07580.2833 ± 0.086730.1 ± 3.640.334 ± 0.040200.3151 ± 0.04080.2419 ± 0.03130.2737 ± 0.0355127.1 ± 6.210.334 ± 0.016300.2532 ± 0.02810.2030 ± 0.02260.2253 ± 0.0250302.9 ± 9.790.348 ± 0.011
 
 ## 4. Data Format Comparison: n×3 vs. n×D
 
