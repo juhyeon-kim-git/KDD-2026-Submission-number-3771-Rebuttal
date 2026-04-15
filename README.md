@@ -205,7 +205,82 @@ The advantages demonstrated on synthetic data directly translate to real-world p
 | DiffAN / THP / Informer / iTransformer | 2,000 | 512 | 20× more epochs, 8× larger batch |
 | CASCADE | 2,000 | — | 20× more epochs |
 
-## 7. Expert Evaluation Protocol
+
+## 7. Baseline Fairness: Extensive Tuning Details
+A key concern raised during review was whether baselines were properly tuned. We emphasize that all baselines were given substantially more computational budget than our method, and multiple configurations were tested:
+Training Budget Comparison
+ConfigurationEpochsBatch SizeBudget vs. OursOurs10064BaselineDiffAN / Diffusion variants2,00051220× epochs, 8× batchTHP / Informer / iTransformer2,00051220× epochs, 8× batchCASCADE2,000—20× epochsPoint Processstandard—Fixed time horizon of 2,000
+Per-Baseline Tuning Efforts
+CASCADE [16]:
+
+Original implementation with default settings
+Maximum delay parameter set to 300
+Additionally tested with multiple distribution families — all yielded near-zero coefficients
+Failure reason: parametric delay assumption violated by bimodal delay distribution (sub-second bursts + multi-minute gaps)
+
+DiffAN [75] and Diffusion-based variants:
+
+Hidden dimension: 256, diffusion steps: 100
+Linear beta schedule (β: 10⁻⁴ to 2×10⁻²)
+Trained for 2,000 epochs with batch size 512 (20× our epochs, 8× our batch)
+Learning rate: 10⁻³, gradient clipping: 1.0
+Failure reason: assumes i.i.d. tabular data (n×D), cannot model temporal dependencies
+
+Simple Granger [79]:
+
+Grid search over regularization parameters from 10⁻⁴ to 10⁻¹
+Coefficient threshold of 0.05
+Failure reason: fixed-lag, linear assumption violated by variable stochastic delays
+
+Point Process [92]:
+
+Standard intensity and interaction parameters (μ=0.02, α_diag=0.25, α_offdiag=0.05, β=1.5)
+Time horizon of 2,000, simulated over 7 days
+Failure reason: parametric Hawkes kernels with linear superposition cannot capture non-linear triggering patterns
+
+Informer [102]:
+
+Window length: 20, model dimension: 256, 8 attention heads, 4 layers, FFN dimension: 512
+Dropout: 0.1, distillation enabled
+Trained for 2,000 epochs with batch size 512
+Additionally tested with bin sizes of 1s, 10s, 60s, 300s — all near-zero
+Failure reason: discretization either merges causally distinct events (large bins) or creates sparse matrices (small bins)
+
+THP [11] and THP + Attention Encoder:
+
+Same optimization settings as diffusion-based models for fair comparison
+Trained for 2,000 epochs with batch size 512
+
+iTransformer [51]:
+
+Window length: 128, z-score normalization + log(1+x) transformation
+Device identifiers additionally embedded
+Same bin size and stride as Informer
+
+Neural Granger Causality (NGC) [Tank et al., 2021]:
+
+Originally designed for regularly sampled n×D time series
+Adapted to our setting via discretization into fixed-width bins
+Achieved F1 ≈ 0.22–0.28 across graph sizes — substantially below our method
+Failure reason: n×D assumption fundamentally limits performance on n×3 event data
+
+Summary
+All baselines were given at least 20× more training epochs and 8× larger batch sizes than our method. Additional hyperparameter searches were conducted for CASCADE (distribution families), Informer (4 different bin sizes), and Granger (regularization grid search). Despite this substantial computational advantage, all baselines produced near-zero F1 on our data. This confirms that the failures are structural — arising from fundamental incompatibilities between the methods' assumptions and the characteristics of asynchronous event sequence data — not from insufficient tuning.
+
+## 8. Generalizability
+Within the Semiconductor / Industrial Domain
+The (timestamp, event_type, device_id) triplet format is the native data structure in industrial manufacturing — not a simplification we imposed. This format is universal across industrial MES systems, as discussed in our paper (Section 2.1) and supported by prior work across network monitoring, healthcare, finance, and social systems [5, 19, 77, 92, 100].
+Cross-Domain Evaluation Challenge
+The core challenge for evaluation on other domains is the absence of ground-truth causal graphs in public event sequence datasets. Datasets such as MIMIC-III (clinical events), LANL (network intrusion logs), and Stack Overflow (interaction logs) provide event streams but lack validated causal graphs, making quantitative evaluation infeasible. This is a known limitation across the entire event-driven causal discovery field — CASCADE [16] (NeurIPS 2024), the most recent method in this area, similarly evaluates on a single proprietary dataset with expert-validated labels.
+Evidence of Domain-Agnostic Capacity
+Despite the evaluation constraint, we provide multiple lines of evidence for generalizability:
+
+Synthetic Hawkes evaluation: Hawkes processes are the canonical self-exciting point process model used across seismology (Ogata 1988), finance (Bacry et al. 2015), social networks (Zhao et al. 2015), healthcare (Brillinger 1988), and criminology (Mohler et al. 2011). Our method consistently outperforms all baselines across four graph sizes (D ∈ {5, 10, 20, 30}) with varied topologies, confirming that performance is not overfit to semiconductor-specific patterns.
+Synthetic-to-real consistency: The performance advantages observed on synthetic data directly translate to real-world semiconductor data (84.6% recall vs. 0% for all baselines), validating that our synthetic benchmark faithfully reflects real-world conditions.
+Method design is domain-agnostic: Our framework makes no semiconductor-specific assumptions. The three components — attention-based history encoding, diffusion-based likelihood modeling, and perturbation-based Granger testing — are general-purpose and applicable to any (timestamp, event_type) log format.
+NGC cross-validation: Neural Granger Causality, adapted from the time-series domain to our event sequence setting, achieves F1 ≈ 0.22–0.28. This confirms that the difficulty lies in the data format (n×3 vs n×D), not in the specific domain.
+
+## 9. Expert Evaluation Protocol
 
 | Dimension | Scale | Acceptance Threshold |
 |---|---|---|
@@ -217,7 +292,7 @@ The advantages demonstrated on synthetic data directly translate to real-world p
 - Cross-validated against real incident cases
 - Scoring conducted independently without inter-expert communication
 
-## 8. Empirical Support for Assumption 2 (Ablation)
+## 10. Empirical Support for Assumption 2 (Ablation)
 
 | Model Variant | vs. Vanilla THP | Implication |
 |---|---|---|
